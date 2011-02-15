@@ -1,3 +1,4 @@
+import instancecache
 import logging
 import mako.template
 import os
@@ -34,8 +35,8 @@ class FileManager(object):
 
 _PROCESSORS = {}
 
-def GetProcessor(name, file_manager):
-  return _PROCESSORS[name](file_manager)
+class ProcessorCache(instancecache.InstanceCache):
+  _dict = _PROCESSORS
 
 class Processor(object):
   def __init__(self, file_manager):
@@ -58,8 +59,8 @@ _PROCESSORS['copy'] = CopyProcessor
 
 _UPDATE_POLICIES = {}
 
-def GetUpdatePolicy(name, file_manager):
-  return _UPDATE_POLICIES[name](file_manager)
+class UpdatePolicyCache(instancecache.InstanceCache):
+  _dict = _UPDATE_POLICIES
 
 class UpdatePolicy(object):
   def __init__(self, file_manager):

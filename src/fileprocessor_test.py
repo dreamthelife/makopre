@@ -133,7 +133,8 @@ class FileManagerBasedTestBase(unittest.TestCase):
 
 class MakoProcessorTest(FileManagerBasedTestBase):
   def testGet(self):
-    proc = fileprocessor.GetProcessor('mako', self.mock_file_manager)
+    proc_cache = fileprocessor.ProcessorCache(self.mock_file_manager)
+    proc = proc_cache.Get('mako')
     self.assert_(isinstance(proc, fileprocessor.MakoProcessor))
 
   def testProcess(self):
@@ -151,7 +152,8 @@ class CopyProcessorTest(FileManagerBasedTestBase):
 
 class AlwaysUpdatePolicy(FileManagerBasedTestBase):
   def testGet(self):
-    pol = fileprocessor.GetUpdatePolicy('always', self.mock_file_manager)
+    pol_cache = fileprocessor.UpdatePolicyCache(self.mock_file_manager)
+    pol = pol_cache.Get('always')
     self.assert_(isinstance(pol, fileprocessor.AlwaysUpdatePolicy))
 
   def testNeedsUpdate(self):
