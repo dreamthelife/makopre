@@ -44,11 +44,13 @@ class FileManagerTest(unittest.TestCase):
     mock_os.path.isfile(BASE_PATH_RIGHT + FILENAME).AndReturn(True)
     self.mox.ReplayAll()
     self.mgr._os= mock_os
-    self.assertTrue(self.mgr.RightExist(FILENAME))
+    self.assertTrue(self.mgr.RightExists(FILENAME))
     self.mox.VerifyAll()
 
   def testLeftIsNewer(self):
     mock_os = self.mox.CreateMock(os)
+    self.mox.StubOutWithMock(self.mgr, 'RightExists')
+    self.mgr.RightExists(FILENAME).AndReturn(True)
     mock_os.stat(BASE_PATH_LEFT + FILENAME).InAnyOrder().AndReturn(
         FakeStat(MTIME_NEW))
     mock_os.stat(BASE_PATH_RIGHT + FILENAME).InAnyOrder().AndReturn(
@@ -57,6 +59,12 @@ class FileManagerTest(unittest.TestCase):
     self.mgr._os = mock_os
     self.assertTrue(self.mgr.LeftIsNewer(FILENAME))
     self.mox.VerifyAll()
+
+  def testLeftIsNewerRaisesOnMissingRightFile(self):
+    self.mox.StubOutWithMock(self.mgr, 'RightExists')
+    self.mgr.RightExists(FILENAME).AndReturn(False)
+    self.mox.ReplayAll()
+    self.assertRaises(AssertionError, self.mgr.LeftIsNewer, FILENAME)
 
   def testCopyLeftToRight(self):
     mock_shutil = self.mox.CreateMock(shutil)
@@ -99,7 +107,7 @@ class FileManagerMock(object):
     self._copy_left_to_right_counter = {}
     self._write_right_buffers = {}
 
-  def RightExist(self, rel_path):
+  def RightExists(self, rel_path):
     return FileManagerMock._FILES[rel_path].right_exist
 
   def LeftIsNewer(self, rel_path):
@@ -115,7 +123,7 @@ class FileManagerMock(object):
 MAKO_TEMPLATE = '${"hello"}\n'
 MAKO_OUTPUT = 'hello\n'
 
-class ProcessorTestBase(unittest.TestCase):
+class FileManagerBasedTestBase(unittest.TestCase):
   def setUp(self):
     self.mox = mox.Mox()
     self.mock_file_manager = FileManagerMock()
@@ -123,7 +131,7 @@ class ProcessorTestBase(unittest.TestCase):
   def tearDown(self):
     self.mox.ResetAll()
 
-class MakoProcessorTest(ProcessorTestBase):
+class MakoProcessorTest(FileManagerBasedTestBase):
   def testGet(self):
     proc = fileprocessor.GetProcessor('mako', self.mock_file_manager)
     self.assert_(isinstance(proc, fileprocessor.MakoProcessor))
@@ -134,12 +142,30 @@ class MakoProcessorTest(ProcessorTestBase):
     self.assertEqual(MAKO_OUTPUT,
                      self.mock_file_manager._write_right_buffers[FILENAME])
 
-class CopyProcessorTest(ProcessorTestBase):
+class CopyProcessorTest(FileManagerBasedTestBase):
   def testProcess(self):
     proc = fileprocessor.CopyProcessor(self.mock_file_manager)
     proc.Process(FILENAME, StringIO.StringIO(CONTENT))
     self.assertEqual(
         1, self.mock_file_manager._copy_left_to_right_counter[FILENAME])
+
+class AlwaysUpdatePolicy(FileManagerBasedTestBase):
+  def testGet(self):
+    pol = fileprocessor.GetUpdatePolicy('always', self.mock_file_manager)
+    self.assert_(isinstance(pol, fileprocessor.AlwaysUpdatePolicy))
+
+  def testNeedsUpdate(self):
+    pol = fileprocessor.AlwaysUpdatePolicy(self.mock_file_manager)
+    self.assertTrue(pol.NeedsUpdate(FILENAME))
+    self.assertTrue(pol.NeedsUpdate(FILENAME_2))
+    self.assertTrue(pol.NeedsUpdate(FILENAME_3))
+
+class NewerUpdatePolicy(FileManagerBasedTestBase):
+  def testNeedsUpdate(self):
+    pol = fileprocessor.NewerUpdatePolicy(self.mock_file_manager)
+    self.assertTrue(pol.NeedsUpdate(FILENAME))
+    self.assertFalse(pol.NeedsUpdate(FILENAME_2))
+    self.assertTrue(pol.NeedsUpdate(FILENAME_3))
 
 if __name__ == '__main__':
   unittest.main()

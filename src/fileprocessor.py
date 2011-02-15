@@ -12,11 +12,12 @@ class FileManager(object):
     self._shutil = shutil
     self._open = open
 
-  def RightExist(self, rel_path):
+  def RightExists(self, rel_path):
     return self._os.path.isfile(self._os.path.join(
         self.base_path_right, rel_path))
 
   def LeftIsNewer(self, rel_path):
+    assert self.RightExists(rel_path)
     lmtime, rmtime = map(
         lambda bp: self._os.stat(self._os.path.join(bp, rel_path)).st_mtime,
         (self.base_path_left, self.base_path_right))
@@ -69,4 +70,12 @@ class AlwaysUpdatePolicy(UpdatePolicy):
     return True
 
 _UPDATE_POLICIES['always'] = AlwaysUpdatePolicy
+
+class NewerUpdatePolicy(UpdatePolicy):
+  def NeedsUpdate(self, rel_path):
+    if not self._file_manager.RightExists(rel_path):
+      return True
+    return self._file_manager.LeftIsNewer(rel_path)
+
+_UPDATE_POLICIES['newer'] = AlwaysUpdatePolicy
 
