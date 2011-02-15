@@ -23,7 +23,30 @@ import logging
 import mako.template
 import os
 import os.path
+import shutil
 import sys
+
+class FileManager:
+  def __init__(self, base_path_left, base_path_right):
+    self.base_path_left, self.base_path_right = base_path_left, base_path_right
+    self.os = os
+    self.shutil = shutil
+
+  def LeftIsNewer(self, rel_path):
+    lmtime, rmtime = map(
+        lambda bp: self.os.stat(self.os.path.join(bp, rel_path)).st_mtime,
+        (self.base_path_left, self.base_path_right))
+    return lmtime > rmtime
+
+  def CopyLeftToRight(self, path):
+    paths = map(lambda bp: self.os.path.join(bp, path),
+        (self.base_path_left, self.base_path_right))
+    self.shutil.copy(*paths)
+
+FILE_PROCESSORS = {}
+
+def proc_preprocess(open_file):
+  input_text = open_file.read()
 
 def main():
   ParseArgs()
@@ -60,4 +83,5 @@ def main():
       except IOError:
         logging.error('Cannot open output file %s for writing.', out_path)
 
-main()
+if __name__ == "__main__":
+  main()
