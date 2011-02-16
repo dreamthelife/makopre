@@ -18,7 +18,7 @@ class InstanceCacheTest(unittest.TestCase):
 
     cache = DummyCache("3")
 
-    self.assertTrue(cache.Has('int'))
-    self.assertFalse(cache.Has('ddd'))
+    self.assertTrue(DummyCache.Has('int'))
+    self.assertFalse(DummyCache.Has('ddd'))
 
     self.assertEqual(3, cache.Get('int'))

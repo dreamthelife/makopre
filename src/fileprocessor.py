@@ -1,3 +1,5 @@
+# Copyright 2011 Andrea Lattuada <utaaal@gmail.com>
+
 import instancecache
 import logging
 import mako.template
@@ -80,3 +82,4 @@ class NewerUpdatePolicy(UpdatePolicy):
 
 _UPDATE_POLICIES['newer'] = AlwaysUpdatePolicy
 
+DEFAULT_UPDATE_POLICY = 'always'

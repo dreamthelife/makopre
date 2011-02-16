@@ -169,5 +169,10 @@ class NewerUpdatePolicy(FileManagerBasedTestBase):
     self.assertFalse(pol.NeedsUpdate(FILENAME_2))
     self.assertTrue(pol.NeedsUpdate(FILENAME_3))
 
+class UpdatePolicyCacheTest(unittest.TestCase):
+  def testHasDefaultUpdatePolicy(self):
+    self.assertTrue(fileprocessor.UpdatePolicyCache.Has(
+        fileprocessor.DEFAULT_UPDATE_POLICY))
+
 if __name__ == '__main__':
   unittest.main()
