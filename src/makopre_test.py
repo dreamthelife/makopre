@@ -31,9 +31,10 @@ class TestBinary(unittest.TestCase):
 
   def CallMakopre(self):
     p = subprocess.Popen(ARGS, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    for l in p.stdout.readline():
-      logging.info(l)
-    return p.wait()
+    
+    ret = p.wait()
+    logging.debug(p.stdout.read())
+    return ret
 
   def test_simple_invocation(self):
     os.chdir('testdata/simple')
